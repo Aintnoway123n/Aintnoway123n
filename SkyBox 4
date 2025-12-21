@@ -1,0 +1,63 @@
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+
+-- Find your F3X tool (SyncAPI)
+local tool
+for _,v in player:GetDescendants() do
+    if v.Name == "SyncAPI" then tool = v.Parent end
+end
+for _,v in game.ReplicatedStorage:GetDescendants() do
+    if v.Name == "SyncAPI" then tool = v.Parent end
+end
+if not tool then return warn("F3X tool not found!") end
+
+local remote = tool.SyncAPI.ServerEndpoint
+
+local function Invoke(args)
+    remote:InvokeServer(unpack(args))
+end
+
+-- Basic F3X functions
+local function CreatePart(cf, parent)
+    Invoke({"CreatePart", "Normal", cf, parent})
+end
+local function SetName(part, name)
+    Invoke({"SetName", {part}, name})
+end
+local function AddMesh(part)
+    Invoke({"CreateMeshes", { {["Part"]=part} }})
+end
+local function SetMesh(part, meshId)
+    Invoke({"SyncMesh", { {["Part"]=part, ["MeshId"]="rbxassetid://"..meshId} }})
+end
+local function SetTexture(part, texId)
+    Invoke({"SyncMesh", { {["Part"]=part, ["TextureId"]="rbxassetid://"..texId} }})
+end
+local function MeshResize(part, size)
+    Invoke({"SyncMesh", { {["Part"]=part, ["Scale"]=size} }})
+end
+local function SetLocked(part, bool)
+    Invoke({"SetLocked", {part}, bool})
+end
+
+-- Create sky
+local function CreateSky(decalId)
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local e, f, g = hrp.Position.X, hrp.Position.Y, hrp.Position.Z
+    CreatePart(CFrame.new(math.floor(e), math.floor(f), math.floor(g)) + Vector3.new(0,6,0), workspace)
+
+    for _, v in workspace:GetDescendants() do
+        if v:IsA("BasePart") and v.CFrame.X == math.floor(e) and v.CFrame.Z == math.floor(g) then
+            SetName(v, "Sky")
+            AddMesh(v)
+            SetMesh(v, "111891702759441") -- default F3X mesh
+            SetTexture(v, decalId)
+            MeshResize(v, Vector3.new(9000,9000,9000))
+            SetLocked(v, true)
+        end
+    end
+end
+
+-- Execute
+CreateSky("93391249031837")
+
