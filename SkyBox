@@ -1,7 +1,3 @@
---[[
-    WARNING: This script uses your existing F3X tool (SyncAPI).
-    It creates a giant sky mesh around your character with the decal 139782839655516.
-]]
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 
