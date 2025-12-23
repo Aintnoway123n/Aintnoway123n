@@ -31,7 +31,7 @@ print("Will ONLY apply to parts WITHOUT decals")
 print("Target Decal ID: 103639613628349")
 
 -- Target decal ID
-local TARGET_DECAL_ID = "103639613628349"
+local TARGET_DECAL_ID = "104003436430154"
 
 -- Track processed parts
 local processedParts = {}
