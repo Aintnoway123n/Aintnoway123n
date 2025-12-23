@@ -1,0 +1,355 @@
+local player = game.Players.LocalPlayer
+local tool
+
+-- Find F3X tool
+for i,v in player:GetDescendants() do
+	if v.Name == "SyncAPI" then
+		tool = v.Parent
+		break
+	end
+end
+
+if not tool then
+	for i,v in game.ReplicatedStorage:GetDescendants() do
+		if v.Name == "SyncAPI" then
+			tool = v.Parent
+			break
+		end
+	end
+end
+
+if not tool then
+	warn("F3X tool not found!")
+	return
+end
+
+local remote = tool.SyncAPI.ServerEndpoint
+
+print("=== SMART DECAL APPLIER ===")
+print("Will NOT apply to player parts")
+print("Will ONLY apply to parts WITHOUT decals")
+print("Target Decal ID: 103639613628349")
+
+-- Target decal ID
+local TARGET_DECAL_ID = 132853104427641"
+
+-- Track processed parts
+local processedParts = {}
+local processedCount = 0
+
+-- Function to check if a part is a PLAYER part (head, torso, limbs, etc.)
+local function isPlayerPart(part)
+	if not part or not part.Parent then return false end
+	
+	-- Check if part belongs to a player character
+	local parent = part.Parent
+	while parent do
+		if parent:IsA("Model") and parent:FindFirstChild("Humanoid") then
+			return true -- This is a character model
+		end
+		parent = parent.Parent
+	end
+	
+	-- Check common player part names
+	local playerPartNames = {
+		"Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg",
+		"LeftFoot", "RightFoot", "LeftHand", "RightHand", "HumanoidRootPart",
+		"UpperTorso", "LowerTorso", "LeftUpperArm", "RightUpperArm",
+		"LeftLowerArm", "RightLowerArm", "LeftUpperLeg", "RightUpperLeg",
+		"LeftLowerLeg", "RightLowerLeg"
+	}
+	
+	for _, name in ipairs(playerPartNames) do
+		if part.Name == name then
+			return true
+		end
+	end
+	
+	return false
+end
+
+-- Function to check if a part ALREADY has our target decal
+local function hasTargetDecal(part)
+	if not part then return false end
+	
+	-- Check ALL decals on the part
+	for _, decal in ipairs(part:GetChildren()) do
+		if decal:IsA("Decal") then
+			-- Check if this decal has our target texture
+			if tostring(decal.Texture) == "rbxassetid://" .. TARGET_DECAL_ID then
+				return true
+			end
+			
+			-- Also check the texture string directly
+			local textureStr = tostring(decal.Texture)
+			if string.find(textureStr, TARGET_DECAL_ID) then
+				return true
+			end
+		end
+	end
+	
+	return false
+end
+
+-- Function to check if a part has ANY decal at all
+local function hasAnyDecal(part)
+	if not part then return false end
+	
+	for _, decal in ipairs(part:GetChildren()) do
+		if decal:IsA("Decal") then
+			return true
+		end
+	end
+	
+	return false
+end
+
+-- Function to apply decal to ONE part (with all checks)
+local function applyDecalToPart(part)
+	if not part or not part.Parent then 
+		print("  ✗ Part doesn't exist")
+		return false 
+	end
+	
+	-- CHECK 1: Is this a PLAYER part?
+	if isPlayerPart(part) then
+		print("  ✗ Skipping PLAYER part: " .. part.Name)
+		return false
+	end
+	
+	-- CHECK 2: Already processed?
+	if processedParts[part] then
+		print("  ⚡ Already processed this part")
+		return true
+	end
+	
+	-- CHECK 3: Does it already have OUR target decal?
+	if hasTargetDecal(part) then
+		print("  ✓ Already has our decal: " .. part.Name)
+		processedParts[part] = true
+		return true
+	end
+	
+	-- CHECK 4: Does it have ANY decal? (Optional - uncomment if you want)
+	--[[
+	if hasAnyDecal(part) then
+		print("  ⚠ Part has other decals, skipping: " .. part.Name)
+		processedParts[part] = true
+		return true
+	end
+	]]
+	
+	print("  🎨 Applying decals to: " .. part.Name)
+	
+	-- Unlock the part
+	local unlockSuccess = pcall(function()
+		local unlockArgs = {
+			[1] = "SetLocked",
+			[2] = {[1] = part},
+			[3] = false
+		}
+		remote:InvokeServer(unpack(unlockArgs))
+	end)
+	
+	if not unlockSuccess then
+		print("    ✗ Failed to unlock")
+		return false
+	end
+	
+	wait(0.1)
+	
+	-- Apply to ALL 6 faces
+	local faces = {
+		Enum.NormalId.Top,
+		Enum.NormalId.Bottom,
+		Enum.NormalId.Front,
+		Enum.NormalId.Back,
+		Enum.NormalId.Left,
+		Enum.NormalId.Right
+	}
+	
+	for _, face in ipairs(faces) do
+		-- Create decal slot
+		local createSuccess = pcall(function()
+			local createArgs = {
+				[1] = "CreateTextures",
+				[2] = {
+					[1] = {
+						["Part"] = part,
+						["Face"] = face,
+						["TextureType"] = "Decal"
+					}
+				}
+			}
+			remote:InvokeServer(unpack(createArgs))
+		end)
+		
+		if createSuccess then
+			wait(0.05)
+			
+			-- Apply our target decal
+			local applySuccess = pcall(function()
+				local applyArgs = {
+					[1] = "SyncTexture",
+					[2] = {
+						[1] = {
+							["Part"] = part,
+							["Face"] = face,
+							["TextureType"] = "Decal",
+							["Texture"] = "rbxassetid://" .. TARGET_DECAL_ID
+						}
+					}
+				}
+				remote:InvokeServer(unpack(applyArgs))
+			end)
+			
+			if not applySuccess then
+				print("    ✗ Failed to apply to face: " .. tostring(face))
+			end
+		else
+			print("    ✗ Failed to create on face: " .. tostring(face))
+		end
+		
+		wait(0.05)
+	end
+	
+	-- MARK AS PROCESSED
+	processedParts[part] = true
+	processedCount = processedCount + 1
+	
+	print("    ✓ DONE decorating")
+	return true
+end
+
+-- ========== SCAN AND PROCESS ==========
+print("\n=== Scanning workspace ===")
+
+local totalParts = 0
+local playerPartsSkipped = 0
+local alreadyHasDecal = 0
+local decorated = 0
+
+-- First pass: Scan and count
+for _, obj in pairs(workspace:GetDescendants()) do
+	if obj:IsA("BasePart") and obj.Parent then
+		totalParts = totalParts + 1
+		
+		if isPlayerPart(obj) then
+			playerPartsSkipped = playerPartsSkipped + 1
+			processedParts[obj] = true -- Mark player parts as processed
+		elseif hasTargetDecal(obj) then
+			alreadyHasDecal = alreadyHasDecal + 1
+			processedParts[obj] = true -- Mark as already having our decal
+		end
+	end
+end
+
+print("Total parts found: " .. totalParts)
+print("Player parts (will skip): " .. playerPartsSkipped)
+print("Already have our decal: " .. alreadyHasDecal)
+print("Remaining to process: " .. (totalParts - playerPartsSkipped - alreadyHasDecal))
+
+-- Second pass: Process remaining parts
+print("\n=== Processing eligible parts ===")
+
+for _, obj in pairs(workspace:GetDescendants()) do
+	if obj:IsA("BasePart") and obj.Parent and not processedParts[obj] then
+		if applyDecalToPart(obj) then
+			decorated = decorated + 1
+		end
+		wait(0.2)
+		
+		if decorated % 10 == 0 then
+			print("Progress: " .. decorated .. " parts decorated")
+		end
+	end
+end
+
+print("\n=== SUMMARY ===")
+print("Total parts in workspace: " .. totalParts)
+print("Player parts skipped: " .. playerPartsSkipped)
+print("Already had our decal: " .. alreadyHasDecal)
+print("Newly decorated: " .. decorated)
+print("Total processed now: " .. (playerPartsSkipped + alreadyHasDecal + decorated))
+
+-- ========== MONITOR FOR NEW PARTS ==========
+print("\n=== Setting up monitor ===")
+
+workspace.DescendantAdded:Connect(function(obj)
+	wait(1) -- Wait for part to fully exist
+	
+	if obj:IsA("BasePart") and obj.Parent then
+		-- CHECK: Is this a player part?
+		if isPlayerPart(obj) then
+			print("⏭ New PLAYER part detected, skipping: " .. obj.Name)
+			processedParts[obj] = true
+			return
+		end
+		
+		-- CHECK: Does it already have our decal?
+		if hasTargetDecal(obj) then
+			print("⏭ Already has our decal, skipping: " .. obj.Name)
+			processedParts[obj] = true
+			return
+		end
+		
+		-- Apply decals
+		print("🎯 New part detected: " .. obj.Name)
+		if applyDecalToPart(obj) then
+			print("   ✓ Auto-decorated")
+		end
+	end
+end)
+
+-- ========== PERIODIC SCAN ==========
+local function periodicScan()
+	while true do
+		wait(10) -- Scan every 10 seconds
+		
+		local newlyFound = 0
+		print("\n🔍 Periodic scan...")
+		
+		for _, obj in pairs(workspace:GetDescendants()) do
+			if obj:IsA("BasePart") and obj.Parent and not processedParts[obj] then
+				-- Skip player parts
+				if isPlayerPart(obj) then
+					processedParts[obj] = true
+					continue
+				end
+				
+				-- Skip if already has our decal
+				if hasTargetDecal(obj) then
+					processedParts[obj] = true
+					continue
+				end
+				
+				-- Decorate it
+				print("  Found undecorated part: " .. obj.Name)
+				if applyDecalToPart(obj) then
+					newlyFound = newlyFound + 1
+				end
+				wait(0.1)
+			end
+		end
+		
+		if newlyFound > 0 then
+			print("  ✓ Found and decorated " .. newlyFound .. " new parts")
+		end
+	end
+end
+
+-- Start periodic scan
+task.spawn(periodicScan)
+
+print("\n✅ SYSTEM ACTIVE!")
+print("Rules:")
+print("  1. NEVER applies to player parts")
+print("  2. ONLY applies if part doesn't have decal ID: " .. TARGET_DECAL_ID)
+print("  3. Periodic scan every 10 seconds")
+print("\nMonitoring for new parts...")
+
+-- Keep alive
+while true do
+	wait(30)
+	print("[STATUS] Running. Total processed: " .. (playerPartsSkipped + alreadyHasDecal + decorated))
+end
