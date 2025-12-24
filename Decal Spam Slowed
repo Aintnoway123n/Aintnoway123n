@@ -276,7 +276,7 @@ print("Total processed now: " .. (playerPartsSkipped + alreadyHasDecal + decorat
 print("\n=== Setting up monitor ===")
 
 workspace.DescendantAdded:Connect(function(obj)
-	wait(1) -- Wait for part to fully exist
+	wait() -- Wait for part to fully exist
 	
 	if obj:IsA("BasePart") and obj.Parent then
 		-- CHECK: Is this a player part?
@@ -304,7 +304,7 @@ end)
 -- ========== PERIODIC SCAN ==========
 local function periodicScan()
 	while true do
-		wait(1) -- Scan every 1 seconds
+		wait() -- Scans
 		
 		local newlyFound = 0
 		print("\n🔍 Periodic scan...")
@@ -345,7 +345,7 @@ print("\n✅ SYSTEM ACTIVE!")
 print("Rules:")
 print("  1. NEVER applies to player parts")
 print("  2. ONLY applies if part doesn't have decal ID: " .. TARGET_DECAL_ID)
-print("  3. Periodic scan every 10 seconds")
+print("  3. Periodic scan every 1 seconds")
 print("\nMonitoring for new parts...")
 
 -- Keep alive
