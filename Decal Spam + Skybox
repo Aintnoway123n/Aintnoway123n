@@ -537,7 +537,7 @@ SetName(v,"Sky")
 AddMesh(v)
 --end)
 --spawn(function()
-SetMesh(v,"111891702759441")
+SetMesh(v,"104003436430154")
 SetTexture(v,id)
 --end)
 MeshResize(v,Vector3.new(9000,9000,9000))
@@ -1035,7 +1035,7 @@ local ids = {
 
 }
 
-while wait(0.1) do
+while wait() do
 
 spawn(function()  
 
