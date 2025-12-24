@@ -304,7 +304,7 @@ end)
 -- ========== PERIODIC SCAN ==========
 local function periodicScan()
 	while true do
-		wait(10) -- Scan every 10 seconds
+		wait(1) -- Scan every 1 seconds
 		
 		local newlyFound = 0
 		print("\n🔍 Periodic scan...")
