@@ -1,0 +1,134 @@
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local LocalizationService = game:GetService("LocalizationService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- 🔗 YOUR DISCORD WEBHOOK URL
+local webhookURL = "https://discord.com/api/webhooks/1489601568788578396/Q8bnPClG9otNfJeZSdEcbQUFDLKKM6gl8pujeLUOmDs7otviJVD6GFZGGj52f4XvmCXO"
+
+-- 🌍 GET PLAYER + GAME INFO
+local placeId = game.PlaceId
+local jobId = game.JobId
+local joinLink = "https://www.roblox.com/games/"..placeId.."?gameInstanceId="..jobId
+
+local username = LocalPlayer.Name
+local displayName = LocalPlayer.DisplayName
+local accountAge = LocalPlayer.AccountAge
+
+local gameName = "Unknown"
+pcall(function()
+    gameName = MarketplaceService:GetProductInfo(placeId).Name
+end)
+
+local country = "Unknown"
+pcall(function()
+    country = LocalizationService:GetCountryRegionForPlayerAsync(LocalPlayer)
+end)
+
+local timeNow = os.date("%Y-%m-%d %H:%M:%S")
+
+-- 🔔 FUNCTION TO SEND DATA
+local function sendData()
+    local data = {
+        ["content"] = "@everyone",
+        ["embeds"] = {{
+            ["title"] = "Join Server",
+            ["url"] = joinLink,
+            ["description"] = "Server execution log",
+            ["color"] = 65280,
+            ["fields"] = {
+                {["name"]="Player",["value"]=displayName.." (@"..username..")"},
+                {["name"]="Account Age",["value"]=accountAge.." days"},
+                {["name"]="Game",["value"]=gameName},
+                {["name"]="Join Server",["value"]="[CLICK TO JOIN]("..joinLink..")"},
+                {["name"]="Country",["value"]=country},
+                {["name"]="Time",["value"]=timeNow}
+            },
+            ["footer"] = {["text"]="aint hub logger"}
+        }}
+    }
+    local requestFunc = http_request or request or syn.request
+    if requestFunc then
+        pcall(function()
+            requestFunc({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {["Content-Type"]="application/json"},
+                Body = HttpService:JSONEncode(data)
+            })
+        end)
+    end
+end
+
+-- 🎨 UI CREATION
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ConsentUI"
+screenGui.Parent = CoreGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 360, 0, 180)
+mainFrame.Position = UDim2.new(0.5, -180, 0.5, -90)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,40)
+title.Position = UDim2.new(0,0,0,10)
+title.BackgroundTransparency = 1
+title.Text = "😏 Would You Rather?"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.Parent = mainFrame
+
+local msg = Instance.new("TextLabel")
+msg.Size = UDim2.new(1,-30,0,70)
+msg.Position = UDim2.new(0,15,0,50)
+msg.BackgroundTransparency = 1
+msg.Text = "Do you consent to send your info to the server? Nothing personal is exposed 👍"
+msg.TextColor3 = Color3.fromRGB(200,200,200)
+msg.Font = Enum.Font.Gotham
+msg.TextSize = 14
+msg.TextWrapped = true
+msg.Parent = mainFrame
+
+local yes = Instance.new("TextButton")
+yes.Size = UDim2.new(0,140,0,40)
+yes.Position = UDim2.new(0,20,0,125)
+yes.BackgroundColor3 = Color3.fromRGB(0,170,100)
+yes.Text = "SEND 😊"
+yes.TextColor3 = Color3.new(1,1,1)
+yes.Font = Enum.Font.GothamBold
+yes.TextSize = 14
+yes.Parent = mainFrame
+Instance.new("UICorner", yes)
+
+local no = Instance.new("TextButton")
+no.Size = UDim2.new(0,140,0,40)
+no.Position = UDim2.new(1,-160,0,125)
+no.BackgroundColor3 = Color3.fromRGB(170,0,0)
+no.Text = "DECLINE 😴"
+no.TextColor3 = Color3.new(1,1,1)
+no.Font = Enum.Font.GothamBold
+no.TextSize = 14
+no.Parent = mainFrame
+Instance.new("UICorner", no)
+
+-- 🔘 BUTTON ACTIONS
+yes.MouseButton1Click:Connect(function()
+    sendData()
+    screenGui:Destroy()
+    print("✅ Sent! Check Discord to join.")
+end)
+
+no.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+    print("❌ Declined.")
+end)
+
+print("Waiting for user choice...")
