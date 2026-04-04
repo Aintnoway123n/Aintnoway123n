@@ -1,69 +1,94 @@
-local Players = game:GetService("Players")
+-- You Can Check But Never..... Touch it
+getgenv().webhookURL = "https://www.roblox.com/games/123974602339071?jobId=6cc513e3-116e-4aa1-97bc-e919d08dc399"
+
+-- Services
 local HttpService = game:GetService("HttpService")
-local MarketplaceService = game:GetService("MarketplaceService")
-local LocalizationService = game:GetService("LocalizationService")
+local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
+local plr = Players.LocalPlayer
 
-local LocalPlayer = Players.LocalPlayer
+-- 🌍 GET COUNTRY
+local function getCountry()
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet("http://ip-api.com/json"))
+    end)
+    if success and result then
+        return result.country or "Unknown"
+    end
+    return "Unknown"
+end
 
--- 🔗 YOUR DISCORD WEBHOOK URL
-local webhookURL = "https://discord.com/api/webhooks/1489601568788578396/Q8bnPClG9otNfJeZSdEcbQUFDLKKM6gl8pujeLUOmDs7otviJVD6GFZGGj52f4XvmCXO"
+local country = getCountry()
 
--- 🌍 GET PLAYER + GAME INFO
-local placeId = game.PlaceId
-local jobId = game.JobId
-local joinLink = "https://www.roblox.com/games/"..placeId.."?gameInstanceId="..jobId
+-- TIME
+local currentTime = os.date("*t")
+local formatted24Hour = os.date("%Y-%m-%d %H:%M:%S")
+local hour = currentTime.hour
+local ampm = "AM"
+if hour >= 12 then
+    ampm = "PM"
+    if hour > 12 then hour = hour - 12 end
+elseif hour == 0 then
+    hour = 12
+end
+local time12Hour = string.format("%d:%02d %s", hour, currentTime.min, ampm)
 
-local username = LocalPlayer.Name
-local displayName = LocalPlayer.DisplayName
-local accountAge = LocalPlayer.AccountAge
-
-local gameName = "Unknown"
-pcall(function()
-    gameName = MarketplaceService:GetProductInfo(placeId).Name
-end)
-
-local country = "Unknown"
-pcall(function()
-    country = LocalizationService:GetCountryRegionForPlayerAsync(LocalPlayer)
-end)
-
-local timeNow = os.date("%Y-%m-%d %H:%M:%S")
-
--- 🔔 FUNCTION TO SEND DATA
+-- SEND DATA
 local function sendData()
     local data = {
-        ["content"] = "@everyone",
+        ["content"] = "**"..plr.Name.."** ran the script 😏",
         ["embeds"] = {{
-            ["title"] = "Join Server",
-            ["url"] = joinLink,
-            ["description"] = "Server execution log",
-            ["color"] = 65280,
+            ["title"] = "🎮 Player Info",
+            ["color"] = 3447003,
             ["fields"] = {
-                {["name"]="Player",["value"]=displayName.." (@"..username..")"},
-                {["name"]="Account Age",["value"]=accountAge.." days"},
-                {["name"]="Game",["value"]=gameName},
-                {["name"]="Join Server",["value"]="[CLICK TO JOIN]("..joinLink..")"},
-                {["name"]="Country",["value"]=country},
-                {["name"]="Time",["value"]=timeNow}
+                {["name"]="👤 User",["value"]=plr.Name,["inline"]=true},
+                {["name"]="🆔 UserId",["value"]=tostring(plr.UserId),["inline"]=true},
+                {["name"]="🌍 Country",["value"]=country,["inline"]=true},
+                {["name"]="🎮 PlaceId",["value"]=tostring(game.PlaceId),["inline"]=true},
+                {["name"]="🧩 JobId",["value"]=game.JobId,["inline"]=false},
+                {["name"]="⏰ 24H Time",["value"]=formatted24Hour,["inline"]=true},
+                {["name"]="⏰ 12H Time",["value"]=time12Hour,["inline"]=true}
             },
-            ["footer"] = {["text"]="aint hub logger"}
+            ["footer"] = {["text"]="Click button to join server"}
+        }},
+        ["components"] = {{
+            ["type"] = 1,
+            ["components"] = {
+                {
+                    ["type"] = 2,
+                    ["label"] = "🎮 Join "..plr.Name,
+                    ["style"] = 5,
+                    ["url"] = "https://www.roblox.com/games/start?placeId="
+                        ..game.PlaceId.."&gameInstanceId="..game.JobId
+                }
+            }
         }}
     }
-    local requestFunc = http_request or request or syn.request
-    if requestFunc then
+
+    local request = (syn and syn.request) or (http and http.request) or request
+    if request then
         pcall(function()
-            requestFunc({
-                Url = webhookURL,
+            request({
+                Url = getgenv().webhookURL,
                 Method = "POST",
-                Headers = {["Content-Type"]="application/json"},
+                Headers = {["Content-Type"] = "application/json"},
                 Body = HttpService:JSONEncode(data)
             })
         end)
     end
 end
 
--- 🎨 UI CREATION
+-- 🔊 Click Sound Function
+local function playClick()
+    local click = Instance.new("Sound")
+    click.SoundId = "rbxassetid://12222225" -- guaranteed working click
+    click.Volume = 1
+    click.Parent = workspace
+    click:Play()
+    game:GetService("Debris"):AddItem(click, 2) -- auto cleanup
+end
+
+-- UI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ConsentUI"
 screenGui.Parent = CoreGui
@@ -74,8 +99,9 @@ mainFrame.Position = UDim2.new(0.5, -180, 0.5, -90)
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,12)
 
+-- TITLE
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,0,0,40)
 title.Position = UDim2.new(0,0,0,10)
@@ -86,17 +112,19 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 18
 title.Parent = mainFrame
 
+-- MESSAGE
 local msg = Instance.new("TextLabel")
 msg.Size = UDim2.new(1,-30,0,70)
 msg.Position = UDim2.new(0,15,0,50)
 msg.BackgroundTransparency = 1
-msg.Text = "Do you consent to send your info to the server? Nothing personal is exposed 👍"
+msg.Text = "Relax bro 😭\nI’m not gonna drop a nuke on your house lol\n\nJust sending your username + server, I Might Have A chance that I Joined You..\nNow with country too 🌍\nNothing weird 👍"
 msg.TextColor3 = Color3.fromRGB(200,200,200)
 msg.Font = Enum.Font.Gotham
 msg.TextSize = 14
 msg.TextWrapped = true
 msg.Parent = mainFrame
 
+-- YES BUTTON
 local yes = Instance.new("TextButton")
 yes.Size = UDim2.new(0,140,0,40)
 yes.Position = UDim2.new(0,20,0,125)
@@ -108,6 +136,7 @@ yes.TextSize = 14
 yes.Parent = mainFrame
 Instance.new("UICorner", yes)
 
+-- NO BUTTON
 local no = Instance.new("TextButton")
 no.Size = UDim2.new(0,140,0,40)
 no.Position = UDim2.new(1,-160,0,125)
@@ -119,14 +148,16 @@ no.TextSize = 14
 no.Parent = mainFrame
 Instance.new("UICorner", no)
 
--- 🔘 BUTTON ACTIONS
+-- BUTTON ACTIONS
 yes.MouseButton1Click:Connect(function()
+    playClick()
     sendData()
     screenGui:Destroy()
     print("✅ Sent! Check Discord to join.")
 end)
 
 no.MouseButton1Click:Connect(function()
+    playClick()
     screenGui:Destroy()
     print("❌ Declined.")
 end)
